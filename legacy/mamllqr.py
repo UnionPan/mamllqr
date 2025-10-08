@@ -1,6 +1,6 @@
 import scipy.stats as st
 import numpy as np
-from dynamics import Dynamics
+from legacy.dynamics import Dynamics
 import argparse
 from pathlib import Path
 import os
