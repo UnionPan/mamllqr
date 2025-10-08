@@ -22,9 +22,37 @@ from envs.Boeing import Boeing_dynamics
 from algo.hessianfree import HessianFreeMAML
 from algo.zorder import ZOMAML
 
-# Set seaborn style
-sns.set_style("whitegrid")
-plt.rcParams['figure.dpi'] = 100
+# Set plotting aesthetics
+sns.set_style("darkgrid")
+plt.style.use('seaborn-v0_8-darkgrid')
+plt.rcParams.update({
+    'figure.dpi': 100,
+    'figure.facecolor': 'white',
+    'axes.facecolor': '#f8f8f8',
+    'axes.edgecolor': '#cccccc',
+    'axes.linewidth': 1.2,
+    'grid.color': '#e0e0e0',
+    'grid.linewidth': 0.8,
+    'text.color': '#333333',
+    'axes.labelcolor': '#333333',
+    'xtick.color': '#333333',
+    'ytick.color': '#333333',
+    'font.size': 11,
+    'axes.titlesize': 14,
+    'axes.labelsize': 12,
+    'legend.fontsize': 11,
+    'xtick.labelsize': 10,
+    'ytick.labelsize': 10
+})
+
+# color palette
+COLORS = {
+    'HessianFree': '#2E86AB',     # Deep blue
+    'HessianFree_MAML': '#2E86AB', # Deep blue (alternative name)
+    'ZOMAML': '#A23B72',          # Deep magenta
+    'Combined': '#F18F01',        # Orange (if needed)
+    'Reptile':'#C73E1D'         # Deep red (if needed)
+}
 
 
 def create_shared_initial_policy(environment_class, environment_kwargs,
@@ -106,7 +134,7 @@ def run_multiple_rounds(algorithm_name, algorithm_class, algorithm_params, K_ini
 
     all_histories = []
     all_training_times = []
-    all_trained_algorithms = []  # Store algorithms after 50 epochs
+    all_trained_algorithms = []  # Store algorithms after certain epochs
 
     for round_num in range(num_rounds):
         print(f"  Round {round_num + 1}/{num_rounds}")
@@ -433,36 +461,43 @@ def create_seaborn_dataframe(results_multi):
 
 def plot_comparison_results_multifold(results_multi, target_epoch=50):
     """
-    Plot comparison results using seaborn with mean ± std curves.
+    Plot comparison results using RL-style aesthetics with mean ± std curves.
     """
     # Create DataFrame for seaborn
     df = create_seaborn_dataframe(results_multi)
 
-    fig, axes = plt.subplots(1, 3, figsize=(20, 6))
+    fig, axes = plt.subplots(1, 3, figsize=(18, 5.5))
+    fig.patch.set_facecolor('white')
 
     # Plot 1: Training curves - Adapted Cost
     ax1 = axes[0]
     adapted_df = df[df['Metric'] == 'Adapted Cost']
     sns.lineplot(data=adapted_df, x='Epoch', y='Cost', hue='Algorithm',
-                ax=ax1, linewidth=2.5, marker='o', markersize=4)
-    ax1.set_xlabel('Epoch', fontsize=12)
-    ax1.set_ylabel('Adapted Cost', fontsize=12)
-    ax1.set_title('Training Curves: Adapted Cost', fontsize=14, fontweight='bold')
-    ax1.grid(True, alpha=0.3)
-    ax1.legend(fontsize=11)
+                ax=ax1, linewidth=3, palette=COLORS, alpha=0.9,
+                marker='o', markersize=3, markevery=10)
+    ax1.set_xlabel('Training Epoch', fontweight='semibold')
+    ax1.set_ylabel('Adapted Cost', fontweight='semibold')
+    ax1.set_title('Meta-Training: Task Adaptation Performance', fontweight='bold', pad=15)
+    ax1.grid(True, alpha=0.4, linestyle='-', linewidth=0.8)
+    ax1.set_facecolor('#fafafa')
+    legend1 = ax1.legend(frameon=True, fancybox=True, shadow=True, framealpha=0.9)
+    legend1.get_frame().set_facecolor('white')
 
     # Plot 2: Training curves - Zero-shot Cost
     ax2 = axes[1]
     zeroshot_df = df[df['Metric'] == 'Zero-shot Cost']
     sns.lineplot(data=zeroshot_df, x='Epoch', y='Cost', hue='Algorithm',
-                ax=ax2, linewidth=2.5, marker='o', markersize=4)
-    ax2.set_xlabel('Epoch', fontsize=12)
-    ax2.set_ylabel('Zero-shot Cost', fontsize=12)
-    ax2.set_title('Training Curves: Zero-shot Cost', fontsize=14, fontweight='bold')
-    ax2.grid(True, alpha=0.3)
-    ax2.legend(fontsize=11)
+                ax=ax2, linewidth=3, palette=COLORS, alpha=0.9,
+                marker='s', markersize=3, markevery=10)
+    ax2.set_xlabel('Training Epoch', fontweight='semibold')
+    ax2.set_ylabel('Zero-shot Cost', fontweight='semibold')
+    ax2.set_title('Meta-Training: Zero-shot Performance', fontweight='bold', pad=15)
+    ax2.grid(True, alpha=0.4, linestyle='-', linewidth=0.8)
+    ax2.set_facecolor('#fafafa')
+    legend2 = ax2.legend(frameon=True, fancybox=True, shadow=True, framealpha=0.9)
+    legend2.get_frame().set_facecolor('white')
 
-    # Plot 3: Few-shot adaptation performance (aggregated across runs)
+    # Plot 3: Few-shot adaptation performance with enhanced styling
     ax3 = axes[2]
     adaptation_steps = [0, 1, 3, 5]
 
@@ -481,17 +516,30 @@ def plot_comparison_results_multifold(results_multi, target_epoch=50):
             mean_costs.append(np.mean(step_costs))
             std_costs.append(np.std(step_costs))
 
+        color = COLORS.get(algorithm_name, '#666666')
         ax3.errorbar(adaptation_steps, mean_costs, yerr=std_costs,
-                    label=algorithm_name, marker='o', linewidth=2.5,
-                    capsize=8, capthick=2, markersize=6)
+                    label=algorithm_name, marker='D', linewidth=3,
+                    capsize=6, capthick=2.5, markersize=7, color=color,
+                    elinewidth=2.5, alpha=0.9)
 
-    ax3.set_xlabel('Number of Adaptation Steps', fontsize=12)
-    ax3.set_ylabel('Test Cost', fontsize=12)
-    ax3.set_title(f'Few-shot Adaptation (Meta-policy at Epoch {target_epoch})', fontsize=14, fontweight='bold')
-    ax3.legend(fontsize=11)
-    ax3.grid(True, alpha=0.3)
+    ax3.set_xlabel('Gradient Steps', fontweight='semibold')
+    ax3.set_ylabel('Test Performance', fontweight='semibold')
+    ax3.set_title(f'Few-shot Adaptation\n(Meta-policy from Epoch {target_epoch})',
+                  fontweight='bold', pad=15)
+    ax3.set_facecolor('#fafafa')
+    ax3.grid(True, alpha=0.4, linestyle='-', linewidth=0.8)
+    legend3 = ax3.legend(frameon=True, fancybox=True, shadow=True, framealpha=0.9)
+    legend3.get_frame().set_facecolor('white')
 
-    plt.tight_layout()
+    # Enhanced subplot spacing and borders
+    plt.tight_layout(pad=2.0)
+
+    # Add subtle border around entire figure
+    for spine in ['top', 'right', 'bottom', 'left']:
+        for ax in axes:
+            ax.spines[spine].set_color('#cccccc')
+            ax.spines[spine].set_linewidth(1.2)
+
     return fig  # Return figure for saving with custom name
 
 
@@ -511,7 +559,7 @@ def parse_arguments():
                        help="Number of tasks per training round")
     parser.add_argument("--eval_interval", type=int, default=1,
                        help="Evaluation interval during training")
-    parser.add_argument("--target_epoch", type=int, default=50,
+    parser.add_argument("--target_epoch", type=int, default=25,
                        help="Epoch to use for few-shot adaptation evaluation")
 
     # Environment parameters
@@ -727,7 +775,7 @@ def print_multifold_summary_table(results_multi):
 
     # Few-shot performance
     print(f"\n\nFEW-SHOT ADAPTATION PERFORMANCE (mean ± std)")
-    print("Using meta-policies trained for 50 epochs")
+    print(f"Using meta-policies trained for {args.target_epoch} epochs")
     print("-" * 70)
 
     adaptation_steps = [0, 1, 3, 5]
