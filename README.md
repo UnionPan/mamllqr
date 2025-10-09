@@ -1,6 +1,6 @@
 # Meta-Learning for Linear Quadratic Regulator Control
 
-This repository implements and compares meta-learning algorithms for Linear Quadratic Regulator (LQR) control systems, specifically focusing on Boeing aircraft dynamics.
+This repository implements and compares meta-learning algorithms for Linear Quadratic Regulator (LQR) control systems, specifically focusing on Boeing aircraft dynamics. 
 
 ## Installation
 
@@ -33,7 +33,7 @@ pip install -r requirements.txt
 
 ## Environment
 
-The system uses Boeing 747 aircraft dynamics with a 4-dimensional state space:
+The system uses simplified Boeing aircraft dynamics with a 4-dimensional state space:
 - Velocity deviation
 - Angle of attack
 - Pitch rate
@@ -47,7 +47,7 @@ Key configurable parameters include:
 - Training rounds per algorithm (default: 10)
 - Epochs per round (default: 300)
 - Tasks per round (default: 10)
-- Target epoch for few-shot evaluation (default: 30)
+- Target epoch for few-shot evaluation (default: 25)
 - Learning rates for inner/outer loops
 - Noise and perturbation scales
 
@@ -59,7 +59,7 @@ The experiment generates:
 - Training curves comparing algorithm performance
 - Statistical analysis with mean and standard deviation
 - Visualization using seaborn plots
-- Output saved as `{prefix}_multifold.png`
+- Output saved as `{****}_multifold.png`
 
 ## Technical Details
 

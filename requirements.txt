@@ -1,4 +1,38 @@
-numpy>=1.20.0
-matplotlib>=3.5.0
-seaborn>=0.11.0
-pandas>=1.3.0
+absl-py==2.3.1
+carla==0.9.4
+cloudpickle==3.1.1
+contourpy==1.3.0
+cycler==0.12.1
+Farama-Notifications==0.0.4
+fonttools==4.60.1
+grpcio==1.75.1
+gym==0.26.2
+gym-notices==0.1.0
+gymnasium==1.1.1
+importlib_metadata==8.7.0
+importlib_resources==6.5.2
+kiwisolver==1.4.7
+Markdown==3.9
+MarkupSafe==3.0.3
+matplotlib==3.9.4
+mkl-service==2.4.0
+mkl_fft @ file:///io/mkl313/mkl_fft_1730824109137/work
+mkl_random @ file:///io/mkl313/mkl_random_1730823916628/work
+numpy @ file:///croot/numpy_and_numpy_base_1725470312869/work/dist/numpy-2.0.1-cp39-cp39-linux_x86_64.whl#sha256=d86a49760b169e0c4fb8c00d248077a0474f640071b7ef584afd5ad4f03b9428
+packaging==25.0
+pandas==2.3.3
+pillow==11.3.0
+protobuf==6.32.1
+pyparsing==3.2.5
+python-dateutil==2.9.0.post0
+pytz==2025.2
+scipy @ file:///croot/scipy_1733756309941/work/dist/scipy-1.13.1-cp39-cp39-linux_x86_64.whl#sha256=a4372e07d982a377bda57ec71fd74ac403442571e1d717de47325a14dea5c278
+seaborn==0.13.2
+six==1.17.0
+tensorboard==2.20.0
+tensorboard-data-server==0.7.2
+tensorboardX==2.6.4
+typing_extensions==4.15.0
+tzdata==2025.2
+Werkzeug==3.1.3
+zipp==3.23.0
