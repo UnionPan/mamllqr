@@ -49,7 +49,9 @@ plt.rcParams.update({
 COLORS = {
     'HessianFree': '#2E86AB',     # Deep blue
     'HessianFree_MAML': '#2E86AB', # Deep blue (alternative name)
+    'HFMPO': '#2E86AB',           # Deep blue (new name)
     'ZOMAML': '#A23B72',          # Deep magenta
+    'ZOMPO': '#A23B72',           # Deep magenta (new name)
     'Combined': '#F18F01',        # Orange (if needed)
     'Reptile':'#C73E1D'         # Deep red (if needed)
 }
@@ -462,15 +464,24 @@ def create_seaborn_dataframe(results_multi):
 def plot_comparison_results_multifold(results_multi, target_epoch=50):
     """
     Plot comparison results using RL-style aesthetics with mean ± std curves.
+    Includes log-scale performance difference plots.
     """
     # Create DataFrame for seaborn
     df = create_seaborn_dataframe(results_multi)
 
-    fig, axes = plt.subplots(1, 3, figsize=(18, 5.5))
+    # Compute average optimal cost for reference
+    avg_optimal_cost = {}
+    for algorithm_name, data in results_multi.items():
+        aggregated = data['aggregated_history']
+        # Use final epoch cost as proxy for optimal
+        final_costs = aggregated['mean_cost_all'][:, -1]
+        avg_optimal_cost[algorithm_name] = np.mean(final_costs)
+
+    fig, axes = plt.subplots(2, 3, figsize=(18, 11))
     fig.patch.set_facecolor('white')
 
     # Plot 1: Training curves - Adapted Cost
-    ax1 = axes[0]
+    ax1 = axes[0, 0]
     adapted_df = df[df['Metric'] == 'Adapted Cost']
     sns.lineplot(data=adapted_df, x='Epoch', y='Cost', hue='Algorithm',
                 ax=ax1, linewidth=3, palette=COLORS, alpha=0.9,
@@ -484,7 +495,7 @@ def plot_comparison_results_multifold(results_multi, target_epoch=50):
     legend1.get_frame().set_facecolor('white')
 
     # Plot 2: Training curves - Zero-shot Cost
-    ax2 = axes[1]
+    ax2 = axes[0, 1]
     zeroshot_df = df[df['Metric'] == 'Zero-shot Cost']
     sns.lineplot(data=zeroshot_df, x='Epoch', y='Cost', hue='Algorithm',
                 ax=ax2, linewidth=3, palette=COLORS, alpha=0.9,
@@ -498,7 +509,7 @@ def plot_comparison_results_multifold(results_multi, target_epoch=50):
     legend2.get_frame().set_facecolor('white')
 
     # Plot 3: Few-shot adaptation performance with enhanced styling
-    ax3 = axes[2]
+    ax3 = axes[0, 2]
     adaptation_steps = [0, 1, 3, 5]
 
     for algorithm_name, data in results_multi.items():
@@ -524,19 +535,106 @@ def plot_comparison_results_multifold(results_multi, target_epoch=50):
 
     ax3.set_xlabel('Gradient Steps', fontweight='semibold')
     ax3.set_ylabel('Test Performance', fontweight='semibold')
-    ax3.set_title(f'Few-shot Adaptation\n(Meta-policy from Epoch {target_epoch})',
+    ax3.set_title(f'Adapt to Unseen Tasks\n(Meta-policy from Epoch {target_epoch})',
                   fontweight='bold', pad=15)
     ax3.set_facecolor('#fafafa')
     ax3.grid(True, alpha=0.4, linestyle='-', linewidth=0.8)
     legend3 = ax3.legend(frameon=True, fancybox=True, shadow=True, framealpha=0.9)
     legend3.get_frame().set_facecolor('white')
 
+    # Plot 4: Log-scale performance difference - Adapted Cost
+    ax4 = axes[1, 0]
+    for algorithm_name, data in results_multi.items():
+        aggregated = data['aggregated_history']
+        epochs = np.array(aggregated['epoch'])
+        mean_costs = aggregated['mean_cost_mean']
+        optimal_cost = avg_optimal_cost[algorithm_name]
+
+        # Compute performance difference from optimal
+        perf_diff = np.maximum(mean_costs - optimal_cost, 1e-10)  # Avoid log(0)
+
+        color = COLORS.get(algorithm_name, '#666666')
+        ax4.semilogy(epochs, perf_diff, label=algorithm_name, linewidth=3,
+                     color=color, alpha=0.9, marker='o', markersize=3, markevery=10)
+
+    ax4.set_xlabel('Training Epoch', fontweight='semibold')
+    ax4.set_ylabel('Log(Cost - Optimal)', fontweight='semibold')
+    ax4.set_title('Convergence: Adapted Cost (Log Scale)', fontweight='bold', pad=15)
+    ax4.grid(True, alpha=0.4, linestyle='-', linewidth=0.8, which='both')
+    ax4.set_facecolor('#fafafa')
+    legend4 = ax4.legend(frameon=True, fancybox=True, shadow=True, framealpha=0.9)
+    legend4.get_frame().set_facecolor('white')
+
+    # Plot 5: Log-scale performance difference - Zero-shot Cost
+    ax5 = axes[1, 1]
+    for algorithm_name, data in results_multi.items():
+        aggregated = data['aggregated_history']
+        epochs = np.array(aggregated['epoch'])
+        zero_shot_costs = aggregated['zero_shot_cost_mean']
+        optimal_cost = avg_optimal_cost[algorithm_name]
+
+        # Compute performance difference from optimal
+        perf_diff = np.maximum(zero_shot_costs - optimal_cost, 1e-10)  # Avoid log(0)
+
+        color = COLORS.get(algorithm_name, '#666666')
+        ax5.semilogy(epochs, perf_diff, label=algorithm_name, linewidth=3,
+                     color=color, alpha=0.9, marker='s', markersize=3, markevery=10)
+
+    ax5.set_xlabel('Training Epoch', fontweight='semibold')
+    ax5.set_ylabel('Log(Cost - Optimal)', fontweight='semibold')
+    ax5.set_title('Convergence: Zero-shot Cost (Log Scale)', fontweight='bold', pad=15)
+    ax5.grid(True, alpha=0.4, linestyle='-', linewidth=0.8, which='both')
+    ax5.set_facecolor('#fafafa')
+    legend5 = ax5.legend(frameon=True, fancybox=True, shadow=True, framealpha=0.9)
+    legend5.get_frame().set_facecolor('white')
+
+    # Plot 6: Log-scale few-shot adaptation
+    ax6 = axes[1, 2]
+
+    # Compute optimal cost for few-shot adaptation (use 5-shot as proxy for optimal)
+    optimal_few_shot = {}
+    for algorithm_name, data in results_multi.items():
+        all_few_shot = data['all_few_shot_results']
+        five_shot_costs = [few_shot[5]['mean_cost'] for few_shot in all_few_shot]
+        optimal_few_shot[algorithm_name] = np.mean(five_shot_costs)
+
+    for algorithm_name, data in results_multi.items():
+        all_few_shot = data['all_few_shot_results']
+
+        mean_costs = []
+        std_costs = []
+
+        for steps in adaptation_steps:
+            step_costs = []
+            for few_shot in all_few_shot:
+                step_costs.append(few_shot[steps]['mean_cost'])
+
+            mean_costs.append(np.mean(step_costs))
+            std_costs.append(np.std(step_costs))
+
+        # Compute performance difference from optimal (5-shot)
+        optimal_cost = optimal_few_shot[algorithm_name]
+        perf_diff = np.maximum(np.array(mean_costs) - optimal_cost, 1e-10)
+
+        color = COLORS.get(algorithm_name, '#666666')
+        ax6.semilogy(adaptation_steps, perf_diff, label=algorithm_name,
+                     marker='D', linewidth=3, markersize=7, color=color, alpha=0.9)
+
+    ax6.set_xlabel('Gradient Steps', fontweight='semibold')
+    ax6.set_ylabel('Log(Cost - Optimal)', fontweight='semibold')
+    ax6.set_title(f'Adapt to Unseen Tasks (Log Scale)\n(Meta-policy from Epoch {target_epoch})',
+                  fontweight='bold', pad=15)
+    ax6.set_facecolor('#fafafa')
+    ax6.grid(True, alpha=0.4, linestyle='-', linewidth=0.8, which='both')
+    legend6 = ax6.legend(frameon=True, fancybox=True, shadow=True, framealpha=0.9)
+    legend6.get_frame().set_facecolor('white')
+
     # Enhanced subplot spacing and borders
     plt.tight_layout(pad=2.0)
 
     # Add subtle border around entire figure
     for spine in ['top', 'right', 'bottom', 'left']:
-        for ax in axes:
+        for ax in axes.flat:
             ax.spines[spine].set_color('#cccccc')
             ax.spines[spine].set_linewidth(1.2)
 
@@ -673,7 +771,7 @@ def run_multifold_experimental_comparison(args):
     # Run HessianFree MAML (Combined) multiple rounds
     print(f"\n3. Running HessianFree MAML...")
     hf_histories, hf_times, hf_trained_algorithms = run_multiple_rounds(
-        "HessianFree_MAML", HessianFreeMAML, hf_params, K_init_template,
+        "HFMPO", HessianFreeMAML, hf_params, K_init_template,
         common_params, num_tasks, num_epochs, eval_interval,
         args.test_perturbation_scale * 10, args.num_rounds, is_combined=True
     )
@@ -701,7 +799,7 @@ def run_multifold_experimental_comparison(args):
         few_shot = evaluate_few_shot_adaptation(algorithm_target, test_envs)
         hf_few_shot_all.append(few_shot)
 
-    results_multi['HessianFree_MAML'] = {
+    results_multi['HFMPO'] = {
         'all_histories': hf_histories,
         'aggregated_history': hf_aggregated,
         'all_training_times': hf_times,
@@ -711,7 +809,7 @@ def run_multifold_experimental_comparison(args):
     # Run ZOMAML multiple rounds
     print(f"\n4. Running ZOMAML...")
     zo_histories, zo_times, zo_trained_algorithms = run_multiple_rounds(
-        "ZOMAML", ZOMAML, zo_params, K_init_template,
+        "ZOMPO", ZOMAML, zo_params, K_init_template,
         zo_common_params,
         num_tasks, num_epochs, eval_interval,
         args.test_perturbation_scale * 10, args.num_rounds, is_combined=False
@@ -740,7 +838,7 @@ def run_multifold_experimental_comparison(args):
         few_shot = evaluate_few_shot_adaptation(algorithm_target, test_envs)
         zo_few_shot_all.append(few_shot)
 
-    results_multi['ZOMAML'] = {
+    results_multi['ZOMPO'] = {
         'all_histories': zo_histories,
         'aggregated_history': zo_aggregated,
         'all_training_times': zo_times,
