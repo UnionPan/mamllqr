@@ -64,3 +64,17 @@ The experiment generates:
 ## Technical Details
 
 The implementation has analytical cost computation via discrete Lyapunov equations for computational efficiency, serving as a replacement for Monte Carlo rollouts. Natural gradients are computed using Fisher Information Matrix approximation.
+
+## Citation
+
+```bibtex
+@misc{pan2025modelagnosticmetapolicyoptimizationzerothorder,
+      title={Model-Agnostic Meta-Policy Optimization via Zeroth-Order Estimation: A Linear Quadratic Regulator Perspective}, 
+      author={Yunian Pan and Tao Li and Quanyan Zhu},
+      year={2025},
+      eprint={2503.00385},
+      archivePrefix={arXiv},
+      primaryClass={eess.SY},
+      url={https://arxiv.org/abs/2503.00385}, 
+}
+```
